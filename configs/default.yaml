@@ -1,0 +1,52 @@
+# Single source of truth for hyperparameters — train.py, evaluate.py and
+# scripts/make_figures.py all read this file. Per the module brief: "state
+# every hyperparameter that differs from the library default." Everything
+# below is stated explicitly for that reason, even where it matches a
+# library default.
+
+env:
+  net_file: "nets/single-intersection/single-intersection.net.xml"
+  train_route_files:
+    - "nets/single-intersection/single-intersection-vhvh.rou.xml"
+    - "nets/single-intersection/single-intersection-horizontal.rou.xml"
+    - "nets/single-intersection/single-intersection-vertical.rou.xml"
+  eval_route_file: "nets/single-intersection/single-intersection-gen.rou.xml"  # held out from training entirely
+  num_seconds: 500         # 100 steps/episode at delta_time=5; gamma^100 ≈ 0.37 so rewards across full episode still weighted
+  delta_time: 5            # seconds between agent decisions
+  yellow_time: 3
+  min_green: 10
+  use_gui: false            # headless for training/eval speed; GUI reserved for qualitative demo
+
+agent:
+  state_dim: 21
+  action_dim: 4
+  hidden_sizes: [64, 64]
+  activation: relu
+  learning_rate: 1.0e-3
+  optimizer: adam
+  gamma: 0.99
+  buffer_capacity: 15000
+  batch_size: 32
+  target_update_every_steps: 400   # hard update
+  epsilon_start: 1.0
+  epsilon_end: 0.05
+  epsilon_decay_steps: 6000
+  min_replay_before_learning: 1000  # warm-up: don't learn from a near-empty buffer
+
+training:
+  episodes_per_seed: 200            # scale down first under compute pressure; do not cut seeds
+  seeds: [7, 13, 42]
+  domain_randomization: true        # round-robin across train_route_files
+
+evaluation:
+  episodes_per_seed: 30
+  deterministic: true                # epsilon = 0 at evaluation, stated explicitly
+
+baseline:
+  type: fixed_time
+  phase_duration_seconds: 15         # 3 simulation steps of 5s per phase
+  num_phases: 4
+
+logging:
+  log_dir: "logs"
+  model_dir: "models"

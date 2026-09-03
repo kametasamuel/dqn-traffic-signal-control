@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# SUMO/TraCI can leave temp files behind on crashed runs
+*.sumocfg.bak
+tripinfo_*.xml
+
+# Do NOT ignore logs/ or models/ for the final report seeds — the module
+# brief requires committing raw logs and saved weights. Use a GitHub
+# release (see README) only if model weights exceed GitHub's file size
+# limits.

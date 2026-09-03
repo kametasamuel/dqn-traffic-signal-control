@@ -1,0 +1,15 @@
+# Pinned exact versions — per module requirement, do not loosen these without
+# re-verifying end-to-end (installation difficulty is not grounds for change
+# after the selection deadline).
+
+gymnasium==0.29.1
+sumo-rl==1.4.5
+torch==2.9.0
+numpy>=2.1.0
+pandas>=2.2.3
+matplotlib>=3.9.2
+pyyaml>=6.0.2
+tqdm>=4.66.5
+
+# SUMO itself (traci, sumolib) is installed as a system package alongside
+# SUMO — see README section 1 — and is NOT pip-installable here.

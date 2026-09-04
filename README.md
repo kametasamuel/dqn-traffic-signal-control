@@ -5,8 +5,7 @@ MSc/MPhil Data Science — DSCD614 Deep Reinforcement Learning Group Project
 
 A Deep Q-Network agent learns to allocate green time at a single SUMO
 intersection based on lane-level density and queue occupancy, evaluated
-against a fixed-time baseline controller. See `docs/proposal.pdf` for the
-full MDP formulation and experimental protocol; this README covers how to
+against a fixed-time baseline controller. This README covers how to
 install, train, evaluate, and reproduce every figure in the report.
 
 ## 1. Installation
@@ -53,8 +52,10 @@ traffic-dqn/
 ├── train.py                 # SINGLE ENTRY POINT: trains all seeds, writes logs + weights
 ├── evaluate.py               # loads trained weights, runs held-out evaluation + baseline, writes results table
 ├── scripts/
-│   ├── smoke_test.py         # fast sanity check the environment + agent wire up correctly
-│   └── make_figures.py       # regenerates every figure in the report from logs/
+│   ├── smoke_test.py          # fast sanity check the environment + agent wire up correctly
+│   ├── make_figures.py        # regenerates every figure in the report from logs/
+│   ├── per_seed_breakdown.py  # per-seed metric breakdown table (diagnostic)
+│   └── benchmark_speed.py     # steps-per-second benchmark
 ├── logs/                      # raw experiment logs (committed — figures must trace back here)
 ├── models/                    # saved weights for the seeds used in the report/demo
 └── requirements.txt            # pinned exact versions
@@ -73,10 +74,10 @@ writes:
 - `logs/train_seed{N}.csv` — per-episode training reward
 - `models/dqn_seed{N}.pt` — final weights for each seed
 
-Training on `num_seconds=3600` episodes is slow. To reduce compute, cut
-`--episodes` in the config — **do not** cut `--seeds`; see Section 6 of the
-proposal for why (a compute-limited run reduces steps, not the number of
-seeds needed to distinguish a real effect from noise).
+Training uses `num_seconds=500` per episode (100 decision steps at Δt=5s).
+To reduce compute, lower `episodes_per_seed` in `configs/default.yaml` —
+**do not** cut `seeds`; reducing seeds invalidates the cross-seed comparison
+required by the protocol.
 
 ## 4. Evaluation
 
@@ -90,8 +91,9 @@ the held-out route (`single-intersection-gen.rou.xml`) for 30 episodes per
 seed, and runs the identical evaluation on the fixed-time baseline for
 comparison under identical conditions (same episodes, same seeds, same
 metric code — `src/logger.py`'s `compute_metrics` is shared by both).
-Writes `logs/eval_results.csv` with mean ± std across seeds for every
-metric — no single number is reported without a spread.
+Writes `logs/eval_summary.csv` (mean ± std across seeds per metric) and
+`logs/eval_per_episode.csv` (raw per-episode results) — no single number
+is reported without a spread.
 
 ## 5. Reproducing report figures
 

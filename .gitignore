@@ -11,3 +11,6 @@ tripinfo_*.xml
 # brief requires committing raw logs and saved weights. Use a GitHub
 # release (see README) only if model weights exceed GitHub's file size
 # limits.
+
+trips.xml
+*.alt.xml

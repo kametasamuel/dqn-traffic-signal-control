@@ -19,33 +19,29 @@ import gymnasium as gym
 import numpy as np
 from sumo_rl import SumoEnvironment
 
-# Reward function weights — match the MDP specification exactly.
-# R(t) = -(ALPHA * mean_waiting_time(t) + BETA * mean_queue(t))
-# BETA=0.0 so reward depends only on waiting time, which is the primary metric.
-ALPHA = 1.0
-BETA = 0.0
+# Reward scaling factor — system_total_waiting_time sums across all vehicles
+# so it is ~100x larger than the per-vehicle mean; dividing by 100 keeps the
+# reward magnitude comparable to the previous per-vehicle formulation and
+# prevents gradient explosion in the early random phase.
+REWARD_SCALE = 100.0
 
 
 class TrafficSignalWrapper(gym.Wrapper):
-    """Replaces SUMO-RL's default differential reward with the explicit equation
-    from the MDP specification:
+    """Replaces SUMO-RL's default differential reward with a level signal that
+    directly matches the primary evaluation metric (system_total_waiting_time):
 
-        R(t) = -(ALPHA * mean_waiting_time(t) + BETA * mean_queue(t))
+        R(t) = -system_total_waiting_time(t) / REWARD_SCALE
 
-    SUMO-RL's built-in default for SumoEnvironment is -(diff_waiting_time),
-    the *change* in total waiting time per step — a differential signal that
-    can be positive. Our reward is a level signal (always <= 0) that directly
-    penalises the absolute waiting time, which is what the evaluation metrics
-    measure. Using the same signal for training and evaluation is required for
-    the comparison to be honest.
+    Training and evaluation now optimise and measure the same quantity, which
+    is required for an honest comparison. The /REWARD_SCALE keeps gradient
+    magnitudes stable without changing the agent's ranking over actions.
 
     Observation and action spaces are unchanged from the underlying env.
     """
 
     def step(self, action):
         obs, _default_reward, terminated, truncated, info = self.env.step(action)
-        reward = -(ALPHA * info.get("system_mean_waiting_time", 0.0)
-                   + BETA * info.get("system_total_stopped", 0.0))
+        reward = -info.get("system_total_waiting_time", 0.0) / REWARD_SCALE
         return obs, float(reward), terminated, truncated, info
 
     def __getattr__(self, name: str):
